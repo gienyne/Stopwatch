@@ -79,44 +79,41 @@ Nur zu Demonstrations- und Lernzwecken gedacht
 📎 **Hinweis:** Wenn Sie an den Projekten **Lüfterregelung** und **Wetterstation** interessiert sind,  
 finden Sie diese ebenfalls auf meiner [GitLab-Seite](https://git.thm.de/institut-f-r-technik-und-informatik/master-masterseminar/praktikum-eingebettete-systeme/studentischer-code/SoSe-25/) – inklusive Quellcode und Dokumentation. ![THM_Gitlab_ProfilBild](images/git_profilbild.jpg)
 
-📂 Inhalte
 
-🔹 Lüfterregelung (Fan Control)
-🛠 Ziel: Drehzahlregelung eines Lüfters mit STM32 und PI-Regler.
+## 📂 Inhalte
+
+### 🔹 Lüfterregelung (Fan Control)
+
+🛠 **Ziel:** Drehzahlregelung eines Lüfters mit STM32 und PI-Regler.  
 Ein per Potentiometer einstellbarer Sollwert wird durch PWM gesteuert. Die tatsächliche Drehzahl wird über Tachosignale gemessen, geglättet (Median-Filter) und am GLCD angezeigt.
 
-Highlights:
+**Highlights:**
+- PWM-Erzeugung über Timer  
+- Tachosignal-Auswertung mit EXTI & Timer  
+- Drehzahlanzeige auf GLCD  
+- PI-Regler: Simulation (Matlab/Octave) & Embedded-Implementierung
 
-PWM-Erzeugung über Timer
+---
 
-Tachosignal-Auswertung mit EXTI & Timer
+### 🔹 Wetterstation
 
-Drehzahlanzeige auf GLCD
-
-PI-Regler: Simulation (Matlab/Octave) & Embedded-Implementierung
-
-🔹 Wetterstation
-🌦️ Ziel: Wetterdaten erfassen (Temp., Druck, Feuchtigkeit) und über CAN-Bus senden.
+🌦️ **Ziel:** Wetterdaten erfassen (Temperatur, Luftdruck, Luftfeuchtigkeit) und über CAN-Bus senden.  
 Jeder STM32-Knoten veröffentlicht eigene Messwerte im Sekundentakt, empfängt Daten anderer Gruppen und zeigt sie auf dem LCD an.
 
-Highlights:
+**Highlights:**
+- I2C-Anbindung des BME280 (via Bosch-Bibliothek)  
+- CAN-Kommunikation mit ID-Struktur & Filterbänken  
+- LCD-Anzeige aller Knoten mit Umschaltung per Joystick
 
-I2C-Anbindung des BME280 (via Bosch-Bibliothek)
+---
 
-CAN-Kommunikation mit eigener ID-Struktur & Filterbänken
+## ✅ Lerninhalte & Ergebnisse
 
-LCD-Anzeige aller Knoten via Joystick-Steuerung
+- Umgang mit **PWM, EXTI, Timern** und **GLCD-Ausgabe**  
+- Anwendung und Optimierung eines **PI-Reglers** (Theorie & Praxis)  
+- Sensor-Kommunikation über **I2C** (BME280 + Bosch-Bibliothek)  
+- Verständnis des **CAN-Protokolls** (Identifier, Filter, Priorisierung)  
+- Entwicklung modularer Embedded-Software (Sensor- & Regler-Module)  
+- Echtzeit-**Visualisierung** auf Embedded-Systemen mit Benutzerinteraktion
 
-✅ Lerninhalte & Ergebnisse
-Umgang mit PWM, EXTI, Timern und LCD-Ausgabe
-
-Anwendung und Optimierung eines PI-Reglers (Theorie & Praxis)
-
-Sensor-Kommunikation über I2C (BME280 + Bosch-Bib)
-
-Verständnis des CAN-Protokolls, inkl. Filter, Priorisierung und Identifier
-
-Modularisierung von Software (Sensor- & Regler-Module)
-
-Visualisierung von Echtzeitdaten auf Embedded-Systemen
-
+---
