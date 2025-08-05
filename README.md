@@ -73,3 +73,39 @@ Die vollständige Aufgabenbeschreibung befindet sich in der Datei:
 
 Privates Uni-Projekt – kein öffentlicher Wiedergebrauch ohne Rücksprache.  
 Nur zu Demonstrations- und Lernzwecken gedacht
+
+---
+
+📎 **Hinweis:** Wenn Sie an den Projekten **Lüfterregelung** und **Wetterstation** interessiert sind,  
+finden Sie diese ebenfalls auf meiner [GitLab-Seite](https://git.thm.de/institut-f-r-technik-und-informatik/master-masterseminar/praktikum-eingebettete-systeme/studentischer-code/SoSe-25/) – inklusive Quellcode und Dokumentation.
+
+
+## 📂 Inhalte
+
+### 🔹 Lüfterregelung (Fan Control)
+
+- **Projekt 1** – Einführung in Embedded Systems  
+- Ziel: Regelung der Lüftergeschwindigkeit abhängig von der Temperatur  
+- Nutzung von ADC zur Temperaturmessung  
+- PWM-Ausgabe zur stufenlosen Steuerung des Lüfters  
+- LCD-Anzeige für aktuelle Temperatur und Drehzahl  
+- Implementiert mit STM32 HAL-Driver und STM32CubeIDE  
+
+### 🔹 Wetterstation
+
+- **Projekt 2** – Sensorintegration und Datenverarbeitung  
+- Erfassung von Temperatur, Luftfeuchtigkeit und Helligkeit  
+- Speicherung und Anzeige der Sensordaten auf LCD  
+- Steuerung von LEDs abhängig von Umgebungswerten  
+- Erweiterung der Lüfterlogik basierend auf Wetterbedingungen  
+
+---
+
+## ✅ Lerninhalte & Ergebnisse
+
+- **Periphere Initialisierung** (ADC, PWM, GPIO)  
+- **Timersteuerung** und präzise PWM-Generierung  
+- Nutzung des **NVIC** zur Interruptsteuerung  
+- **LCD-Integration** mit eigenen Treibern  
+- Modularer Codeaufbau für bessere Wiederverwendbarkeit  
+- Praxisnahes Systemdesign für Lüfter- und Wetteranwendungen  
