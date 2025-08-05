@@ -26,7 +26,7 @@ Zusätzlich enthält das Repository:
 - Umstellung auf **Timer 2** und Beobachtung des unterschiedlichen Verhaltens
 
 ### 🔹 Stoppuhr-Funktion
-- Start, Stop und Reset über **User-Button** (Laserlichtschranken-Simulation)  
+- Start, Stop und Reset über **User-Button**   
 - Hohe Zeitauflösung: **1/10.000 Sekunde**  
 - Rundenzeiten werden berechnet und auf dem LCD dargestellt  
 - Implementiert mit **Output-Compare** und Interrupts, um die CPU zu entlasten  
