@@ -79,33 +79,44 @@ Nur zu Demonstrations- und Lernzwecken gedacht
 📎 **Hinweis:** Wenn Sie an den Projekten **Lüfterregelung** und **Wetterstation** interessiert sind,  
 finden Sie diese ebenfalls auf meiner [GitLab-Seite](https://git.thm.de/institut-f-r-technik-und-informatik/master-masterseminar/praktikum-eingebettete-systeme/studentischer-code/SoSe-25/) – inklusive Quellcode und Dokumentation. ![THM_Gitlab_ProfilBild](images/git_profilbild.jpg)
 
+📂 Inhalte
 
-## 📂 Inhalte
+🔹 Lüfterregelung (Fan Control)
+🛠 Ziel: Drehzahlregelung eines Lüfters mit STM32 und PI-Regler.
+Ein per Potentiometer einstellbarer Sollwert wird durch PWM gesteuert. Die tatsächliche Drehzahl wird über Tachosignale gemessen, geglättet (Median-Filter) und am GLCD angezeigt.
 
-### 🔹 Lüfterregelung (Fan Control)
+Highlights:
 
-- **Projekt 1** – Einführung in Embedded Systems  
-- Ziel: Regelung der Lüftergeschwindigkeit abhängig von der Temperatur  
-- Nutzung von ADC zur Temperaturmessung  
-- PWM-Ausgabe zur stufenlosen Steuerung des Lüfters  
-- LCD-Anzeige für aktuelle Temperatur und Drehzahl  
-- Implementiert mit STM32 HAL-Driver und STM32CubeIDE  
+PWM-Erzeugung über Timer
 
-### 🔹 Wetterstation
+Tachosignal-Auswertung mit EXTI & Timer
 
-- **Projekt 2** – Sensorintegration und Datenverarbeitung  
-- Erfassung von Temperatur, Luftfeuchtigkeit und Helligkeit  
-- Speicherung und Anzeige der Sensordaten auf LCD  
-- Steuerung von LEDs abhängig von Umgebungswerten  
-- Erweiterung der Lüfterlogik basierend auf Wetterbedingungen  
+Drehzahlanzeige auf GLCD
 
----
+PI-Regler: Simulation (Matlab/Octave) & Embedded-Implementierung
 
-## ✅ Lerninhalte & Ergebnisse
+🔹 Wetterstation
+🌦️ Ziel: Wetterdaten erfassen (Temp., Druck, Feuchtigkeit) und über CAN-Bus senden.
+Jeder STM32-Knoten veröffentlicht eigene Messwerte im Sekundentakt, empfängt Daten anderer Gruppen und zeigt sie auf dem LCD an.
 
-- **Periphere Initialisierung** (ADC, PWM, GPIO)  
-- **Timersteuerung** und präzise PWM-Generierung  
-- Nutzung des **NVIC** zur Interruptsteuerung  
-- **LCD-Integration** mit eigenen Treibern  
-- Modularer Codeaufbau für bessere Wiederverwendbarkeit  
-- Praxisnahes Systemdesign für Lüfter- und Wetteranwendungen  
+Highlights:
+
+I2C-Anbindung des BME280 (via Bosch-Bibliothek)
+
+CAN-Kommunikation mit eigener ID-Struktur & Filterbänken
+
+LCD-Anzeige aller Knoten via Joystick-Steuerung
+
+✅ Lerninhalte & Ergebnisse
+Umgang mit PWM, EXTI, Timern und LCD-Ausgabe
+
+Anwendung und Optimierung eines PI-Reglers (Theorie & Praxis)
+
+Sensor-Kommunikation über I2C (BME280 + Bosch-Bib)
+
+Verständnis des CAN-Protokolls, inkl. Filter, Priorisierung und Identifier
+
+Modularisierung von Software (Sensor- & Regler-Module)
+
+Visualisierung von Echtzeitdaten auf Embedded-Systemen
+
