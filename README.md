@@ -13,7 +13,7 @@ Das Repository enthält das CubeIDE-Projekt:
 
 Zusätzlich enthält das Repository:
 
-- 📄 `abgabe3.pdf` und Theoretische Fragen und Antworten zu Timer & NVIC  
+- 📄 `abgabe3.pdf` Theoretische Fragen und `PES_Abgabe_Projekt2.pdf` Antworten zu Timer & NVIC  
 
 ---
 
