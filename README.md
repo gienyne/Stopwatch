@@ -1,6 +1,6 @@
 # ⏱️ Stopwatch – Embedded Systems Development (ESD)
 
-Dieses Projekt ist im Rahmen der dritten Abgabe des Kurses **Embedded Systems Development (ESD)** entstanden.  
+Dieses Projekt ist im Rahmen des Kurses **Embedded Systems Development (ESD)** entstanden.  
 Ziel war es, **Timer** und **NVIC (Nested Vector Interrupt Controller)** des STM32-Mikrocontrollers zu konfigurieren und eine präzise **Stoppuhr** mit LCD-Anzeige zu implementieren.
 
 ---
