@@ -63,7 +63,7 @@ Die vollständige Aufgabenbeschreibung befindet sich in der Datei:
 ## 🧑‍💻 Autor
 
 - Student: DIMITRY NTOFEU NYATCHA
-- Kurs: Embedded Systems Development – Abgabe 3  
+- Kurs: PES 
 - Sprache: **C**  
 - Tools: **STM32CubeIDE**, **HAL-Driver**
 
