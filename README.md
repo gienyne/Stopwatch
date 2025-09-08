@@ -1,65 +1,51 @@
-# ⏱️ Stopwatch – Embedded Systems Development (ESD)
+ ⏱️ Stopwatch – Embedded Systems mit STM32
 
-Dieses Projekt ist im Rahmen des Kurses **Embedded Systems Development (ESD)** entstanden.  
-Ziel war es, **Timer** und **NVIC (Nested Vector Interrupt Controller)** des STM32-Mikrocontrollers zu konfigurieren und eine präzise **Stoppuhr** mit LCD-Anzeige zu implementieren.
-
----
-
-## 📂 Inhalte des Projekts
-
-Das Repository enthält das CubeIDE-Projekt:
-
-- **08_Stopwatch** – Stoppuhr-Implementierung  und Anzeige der Rundenzeiten auf LCD
-
-Zusätzlich enthält das Repository:
-
-- 📄 `abgabe3.pdf` Theoretische Fragen und `PES_Abgabe_Projekt2.pdf` Antworten zu Timer & NVIC  
+Dieses Projekt demonstriert die Konfiguration von **Timern** und des **NVIC (Nested Vector Interrupt Controller)** auf einem STM32-Mikrocontroller.  
+Umgesetzt wurde eine präzise **Stoppuhr mit LCD-Anzeige**, ergänzt durch Interrupt-gesteuerte Bedienung.
 
 ---
 
-## ✅ Praktische Aufgaben
+## 📂 Projektübersicht
 
-### 🔹 Timer-Konfiguration
-- Verwendung von **Timer 1** mit Prescaler-Einstellung für 10 kHz Zähltakt  
-- Erzeugung eines Überlaufsignals alle 1 Sekunde  
-- Nutzung von `__HAL_TIM_GET_COUNTER` zur Echtzeit-Abfrage des Zählers  
-- Umstellung auf **Timer 2** und Beobachtung des unterschiedlichen Verhaltens
-
-### 🔹 Stoppuhr-Funktion
-- Start, Stop und Reset über **User-Button**   
-- Hohe Zeitauflösung: **1/10.000 Sekunde**  
-- Rundenzeiten werden berechnet und auf dem LCD dargestellt  
-- Implementiert mit **Output-Compare** und Interrupts, um die CPU zu entlasten  
-
-### 🔹 LCD-Anzeige
-- Echtzeit-Darstellung von Minuten, Sekunden und Millisekunden  
-- Automatische Aktualisierung ohne Blockieren der Hauptschleife  
-
-### 🔹 Erweiterte Interruptsteuerung
-- Erklärung und Nutzung von `USE_HAL_TIM_REGISTER_CALLBACKS`  
-- Konfiguration verschiedener Signalflanken für EXTI  
-- Separates Modul `stm32f4xx_hal_exti` für flexible EXTI-Konfiguration  
-- Vergleich von **Interrupt vs. Event** und deren Auswirkungen  
+- **08_Stopwatch** – Implementierung einer Stoppuhr mit Rundenzeit-Anzeige auf LCD  
+- Dokumentation: `abgabe3.pdf`, `PES_Abgabe_Projekt2.pdf` (Fragen & Antworten zu Timer und NVIC)  
 
 ---
 
-## 📄 Aufgabenstellung
+## ✅ Technische Umsetzung
 
-Die vollständige Aufgabenbeschreibung befindet sich in der Datei:
+### 🔹 Timer & Interrupts
+- Konfiguration von **Timer 1** mit Prescaler für 10 kHz Zähltakt  
+- Erzeugung eines Überlaufsignals alle 1 s  
+- Echtzeit-Abfrage über `__HAL_TIM_GET_COUNTER`  
+- Vergleich von **Timer 1** und **Timer 2** zur Analyse des Verhaltens  
+- Nutzung von Output-Compare und Interrupts zur CPU-Entlastung  
 
-📎 `abgabe3.pdf`
+### 🔹 Stoppuhr-Funktionalität
+- Start, Stopp und Reset über User-Button  
+- Zeitauflösung: **1/10.000 Sekunde**  
+- Berechnung und Anzeige von Rundenzeiten  
+- Aktualisierung ohne Blockierung der Main-Loop  
+
+### 🔹 LCD-Integration
+- Darstellung von Minuten, Sekunden und Millisekunden in Echtzeit  
+- Automatische Refresh-Logik  
+
+### 🔹 Erweiterte NVIC-/EXTI-Steuerung
+- Einsatz von `USE_HAL_TIM_REGISTER_CALLBACKS`  
+- Flexible Konfiguration der Signalflanken mit `stm32f4xx_hal_exti`  
+- Vergleich von Interrupt- und Event-Handling  
 
 ---
 
-## ⚙️ Kompilieren & Ausführen
+## ⚙️ Build & Deployment
 
-1. Projekt mit **STM32CubeIDE** importieren  
-2. Zielboard auswählen (z. B. Discovery Board)  
-3. Build starten und Firmware auf die Hardware flashen  
-4. LCD und Button anschließen → Stoppuhr testen  
+1. Projekt in **STM32CubeIDE** importieren  
+2. Zielboard (z. B. STM32 Discovery) auswählen  
+3. Firmware kompilieren und aufspielen  
+4. Stoppuhr starten  
 
 ---
-
 ## 🧑‍💻 Autor
 
 - Student: DIMITRY NTOFEU NYATCHA
@@ -72,7 +58,6 @@ Die vollständige Aufgabenbeschreibung befindet sich in der Datei:
 ## 🔒 Lizenz
 
 Privates Uni-Projekt – kein öffentlicher Wiedergebrauch ohne Rücksprache.  
-Nur zu Demonstrations- und Lernzwecken gedacht
 
 ---
 
@@ -84,26 +69,32 @@ finden Sie diese ebenfalls auf meiner [GitLab-Seite](https://git.thm.de/institut
 
 ### 🔹 Lüfterregelung (Fan Control)
 
-🛠 **Ziel:** Drehzahlregelung eines Lüfters mit STM32 und PI-Regler.  
-Ein per Potentiometer einstellbarer Sollwert wird durch PWM gesteuert. Die tatsächliche Drehzahl wird über Tachosignale gemessen, geglättet (Median-Filter) und am LCD angezeigt.
+**Beschreibung:**  
+Implementierung einer geschlossenen Drehzahlregelung für einen Lüfter auf Basis eines **STM32-Mikrocontrollers**.  
+Der Sollwert wird über ein Potentiometer vorgegeben, die Ansteuerung erfolgt mittels **PWM**.  
+Die Ist-Drehzahl wird über ein Tachosignal erfasst, durch einen **Median-Filter** geglättet und auf einem **LCD** ausgegeben.  
+Die Regelung erfolgt über einen **PI-Regler**, dessen Verhalten sowohl in Matlab/Octave simuliert als auch auf der Hardware implementiert wurde.
 
-**Highlights:**
-- PWM-Erzeugung über Timer  
-- Tachosignal-Auswertung mit EXTI & Timer  
-- Drehzahlanzeige auf LCD  
-- PI-Regler: Simulation (Matlab/Octave) & Embedded-Implementierung
+**Technische Schwerpunkte:**
+- PWM-Erzeugung über Timer-Peripherie  
+- Tachosignal-Auswertung mit **EXTI** und Timer  
+- Echtzeit-Drehzahlanzeige auf LCD  
+- PI-Regler: Simulation & Embedded-Implementierung  
 
 ---
 
 ### 🔹 Wetterstation
 
-🌦️ **Ziel:** Wetterdaten erfassen (Temperatur, Luftdruck, Luftfeuchtigkeit) und über CAN-Bus senden.  
-Jeder STM32-Knoten veröffentlicht eigene Messwerte im Sekundentakt, empfängt Daten anderer Gruppen und zeigt sie auf dem LCD an.
+**Beschreibung:**  
+Entwicklung einer verteilten Wetterstation mit mehreren STM32-Knoten, die Umweltdaten erfassen und über den **CAN-Bus** austauschen.  
+Jeder Knoten misst Temperatur, Luftdruck und Luftfeuchtigkeit, publiziert die Daten im Sekundentakt und empfängt die Werte anderer Knoten.  
+Die Messwerte werden auf einem **LCD** dargestellt, die Anzeige kann per Joystick gesteuert werden.
 
-**Highlights:**
-- I2C-Anbindung des BME280 (via Bosch-Bibliothek)  
-- CAN-Kommunikation mit ID-Struktur & Filterbänken  
-- LCD-Anzeige aller Knoten mit Umschaltung per Joystick
+**Technische Schwerpunkte:**
+- **I2C**-Anbindung des Sensors **BME280** (Bosch-Bibliothek)  
+- CAN-Kommunikation mit strukturierter Identifier- und Filterlogik  
+- LCD-Visualisierung aller Knoten mit Umschaltfunktion über Joystick  
+- Synchronisation und Echtzeit-Datenaustausch im Embedded-Netzwerk  
 
 ---
 
