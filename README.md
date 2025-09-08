@@ -85,12 +85,12 @@ finden Sie diese ebenfalls auf meiner [GitLab-Seite](https://git.thm.de/institut
 ### 🔹 Lüfterregelung (Fan Control)
 
 🛠 **Ziel:** Drehzahlregelung eines Lüfters mit STM32 und PI-Regler.  
-Ein per Potentiometer einstellbarer Sollwert wird durch PWM gesteuert. Die tatsächliche Drehzahl wird über Tachosignale gemessen, geglättet (Median-Filter) und am GLCD angezeigt.
+Ein per Potentiometer einstellbarer Sollwert wird durch PWM gesteuert. Die tatsächliche Drehzahl wird über Tachosignale gemessen, geglättet (Median-Filter) und am LCD angezeigt.
 
 **Highlights:**
 - PWM-Erzeugung über Timer  
 - Tachosignal-Auswertung mit EXTI & Timer  
-- Drehzahlanzeige auf GLCD  
+- Drehzahlanzeige auf LCD  
 - PI-Regler: Simulation (Matlab/Octave) & Embedded-Implementierung
 
 ---
@@ -109,7 +109,7 @@ Jeder STM32-Knoten veröffentlicht eigene Messwerte im Sekundentakt, empfängt D
 
 ## ✅ Lerninhalte & Ergebnisse
 
-- Umgang mit **PWM, EXTI, Timern** und **GLCD-Ausgabe**  
+- Umgang mit **PWM, EXTI, Timern** und **LCD-Ausgabe**  
 - Anwendung und Optimierung eines **PI-Reglers** (Theorie & Praxis)  
 - Sensor-Kommunikation über **I2C** (BME280 + Bosch-Bibliothek)  
 - Verständnis des **CAN-Protokolls** (Identifier, Filter, Priorisierung)  
