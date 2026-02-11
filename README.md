@@ -12,7 +12,7 @@ Umgesetzt wurde eine präzise **Stoppuhr mit LCD-Anzeige**, ergänzt durch Inter
 
 ---
 
-## ✅ Technische Umsetzung
+## Technische Umsetzung
 
 ### 🔹 Timer & Interrupts
 - Konfiguration von **Timer 1** mit Prescaler für 10 kHz Zähltakt  
@@ -98,7 +98,7 @@ Die Messwerte werden auf einem **LCD** dargestellt, die Anzeige kann per Joystic
 
 ---
 
-## ✅ Lerninhalte & Ergebnisse
+## Lerninhalte & Ergebnisse
 
 - Umgang mit **PWM, EXTI, Timern** und **LCD-Ausgabe**  
 - Anwendung und Optimierung eines **PI-Reglers** (Theorie & Praxis)  
