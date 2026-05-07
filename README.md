@@ -1,4 +1,4 @@
-Stopwatch – Embedded Systems mit STM32
+# Stopwatch – Embedded Systems mit STM32
 
 Dieses Projekt demonstriert die Konfiguration von **Timern** und des **NVIC (Nested Vector Interrupt Controller)** auf einem STM32-Mikrocontroller.  
 Umgesetzt wurde eine präzise **Stoppuhr mit LCD-Anzeige**, ergänzt durch Interrupt-gesteuerte Bedienung.
