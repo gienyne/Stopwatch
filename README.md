@@ -1,15 +1,8 @@
-<h1 align="center">STM32F429 Embedded Systems Lab</h1>
+# STM32F429 Embedded Systems Lab
 
-<p align="center">
-A progressive series of bare-metal / HAL-based firmware exercises, from raw GPIO register control to a closed-loop PI motor controller and a multi-node CAN sensor network.
-</p>
+![Status](https://img.shields.io/badge/status-active-brightgreen) ![Platform](https://img.shields.io/badge/platform-STM32F429-blue) ![Language](https://img.shields.io/badge/language-C%20(HAL)-orange) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-<p align="center">
-<img alt="Status" src="https://img.shields.io/badge/status-active-brightgreen">
-<img alt="Platform" src="https://img.shields.io/badge/platform-STM32F429-blue">
-<img alt="Language" src="https://img.shields.io/badge/language-C%20(HAL)-orange">
-<img alt="License" src="https://img.shields.io/badge/license-MIT-lightgrey">
-</p>
+A progressive series of bare-metal / HAL-based firmware exercises and two complete embedded applications, built on the **STM32F429** (Cortex-M4F, Waveshare Open429Z-D board). It starts at raw GPIO register control and ends at a closed-loop PI motor controller and a multi-node CAN sensor network — each step reusing and extending the drivers built in the previous one.
 
 ## Highlights
 
