@@ -2,7 +2,7 @@
 /**
  **************************************************
  * @file        P1_Fan.c
- * @author      Dimitry Ntofeu Nyatcha, Sidal Güray
+ * @author      Dimitry Ntofeu Nyatcha
  * @version     v1.0
  * @date        13.06.2025
  * @brief       Modul zur Initialisierung und Regelung des Lüfters
