@@ -45,9 +45,6 @@ Initializes all GPIO pins required by the display as push-pull outputs.
 Displays a decimal digit at the selected position by updating the segment lines
 and enabling the corresponding digit.
 
-The driver exposes only the primitive display operation. Display multiplexing
-and animation remain the responsibility of the application.
-
 ## Design Notes
 
 The module intentionally hides the complete GPIO layout from the application.
