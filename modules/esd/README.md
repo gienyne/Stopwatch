@@ -1,26 +1,57 @@
-# esd — 4-digit 7-segment display driver
+# esd
 
-Drives a multiplexed 4-digit, 7-segment (+ dot) display over 13 GPIO lines: 6 segment lines on one port, the dot/segment-G on another, and 4 digit-select ("control") lines.
+GPIO driver for a multiplexed four-digit seven-segment display.
 
-## Hardware mapping
+The module encapsulates all GPIO configuration and display control, providing a
+simple API for displaying decimal digits without exposing the underlying pin
+mapping to the application.
 
-| Signal | Pin |
-|---|---|
-| SEG A–F | PD7, PD4, PD5, PD6, PD12, PD11 |
-| SEG G / DOT | PE12 / PE11 |
-| Digit select CNTL1–4 | PD14, PD15, PD0, PD1 |
+## Responsibilities
 
-Segment-G lives on a different GPIO port than the other six segments, so it's OR'd into the output separately inside `esd_show_digit`.
+The driver is responsible for:
 
-## API
+- Configuring all display GPIO pins.
+- Selecting the active digit position.
+- Driving the corresponding segment lines.
+- Abstracting the hardware through a simple public API.
+
+## Hardware
+
+The display is connected through thirteen GPIO lines.
+
+| Signal | Pins |
+|---------|------|
+| Segments A–F | PD7, PD4, PD5, PD6, PD12, PD11 |
+| Segment G | PE12 |
+| Decimal Point | PE11 |
+| Digit Select (1–4) | PD14, PD15, PD0, PD1 |
+
+Because Segment G is connected to a different GPIO port than the remaining
+segments, it is written separately when required.
+
+## Public API
 
 ```c
 void esd_init(void);
-void esd_show_digit(esd_digit_t digit, esd_position_t pos);
+void esd_show_digit(esd_digit_t digit, esd_position_t position);
 ```
 
-`esd_init` configures the 13 pins as push-pull outputs. `esd_show_digit` writes the segment pattern for `digit` (0–9) to the display and asserts the given `pos` (`ESD_POSITION_1..4` or `ESD_POSITION_ALL`). Segment patterns are precomputed bitmasks (`DIGIT_0` … `DIGIT_9`) rather than a lookup table, to keep the write a single register store.
+### `esd_init()`
 
-## Notes
+Initializes all GPIO pins required by the display as push-pull outputs.
 
-Since only one digit position is enabled at a time, showing more than one digit "at once" (e.g. a 4-digit countdown) requires the caller to cycle through positions fast enough for persistence of vision — this module exposes the primitive, the multiplexing loop lives in the application.
+### `esd_show_digit()`
+
+Displays a decimal digit at the selected position by updating the segment lines
+and enabling the corresponding digit.
+
+The driver exposes only the primitive display operation. Display multiplexing
+and animation remain the responsibility of the application.
+
+## Design Notes
+
+The module intentionally hides the complete GPIO layout from the application.
+
+As a result, applications only manipulate digits and display positions, while
+all hardware-specific details remain centralized inside the driver. This design
+pattern is reused by every subsequent module in the repository.
