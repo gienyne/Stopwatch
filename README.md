@@ -10,7 +10,6 @@ A progressive series of bare-metal / HAL-based firmware exercises and two comple
 - [Learning path](#learning-path)
 - [Modules](#modules)
 - [Projects](#projects)
-- [Skills demonstrated](#skills-demonstrated)
 - [Hardware](#hardware)
 - [Documentation](#documentation)
 - [Building](#building)
@@ -74,10 +73,6 @@ Reusable, single-responsibility drivers on top of the STM32Cube HAL. Each has it
 |---|---|
 | [`P1_Fan_Control`](P1_Fan_Control) | Closed-loop PI speed controller for a PWM/tacho fan; setpoint from a potentiometer, live setpoint-vs-actual bar graph on the LCD. Gains (`Kp = 2.0`, `Ki = 3.8`) tuned first in MATLAB/Octave against a simulated plant, then carried over to hardware. |
 | [`P2_Weatherstation`](P2_Weatherstation) | BME280-based sensor node publishing temperature/pressure/humidity on a 125 kbit/s CAN bus every second, with a joystick-selectable multi-node LCD dashboard and per-sensor-type receive filter banks. |
-
-## Skills demonstrated
-
-`GPIO (digital I/O, multiplexed output)` · `EXTI / NVIC (interrupt-driven input)` · `ADC (polling & DMA, noise filtering)` · `DMA (circular buffers)` · `Timers (Output Compare, PWM, One-Pulse Mode, prescaler/period math)` · `SPI (TFT display driver)` · `I²C (sensor communication)` · `CAN bus (multi-node network, filter banks, arbitration)` · `Discrete PI control` · `Modular driver design in C`
 
 ## Hardware
 
