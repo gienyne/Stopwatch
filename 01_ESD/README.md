@@ -1,13 +1,38 @@
-# 01_ESD — GPIO output at scale: 7-segment display
+# GPIO Output – Seven-Segment Display
 
-Scales GPIO output from two LEDs ([`00_Introduction`](../00_Introduction)) to 13 coordinated pins driving a multiplexed 4-digit, 7-segment display, via the [`esd`](../modules/esd) module.
+This exercise extends the GPIO fundamentals introduced in
+[`00_Introduction`](../00_Introduction) by driving a four-digit seven-segment
+display instead of two individual LEDs.
 
-## What this covers
+To avoid placing all GPIO logic inside `main.c`, the display control is moved
+into the reusable [`esd`](../modules/esd) driver. The application is therefore
+reduced to initializing the driver and updating the displayed digits.
 
-- Mapping and documenting a fixed GPIO-pin-to-hardware-signal assignment (segments A–F, segment G/dot, and 4 digit-select lines) directly from the board's schematic, so later code never has to re-derive it.
-- Structuring GPIO logic into a proper module (`esd.h`/`esd.c`) instead of inline `main.c` code — the pattern every later exercise's driver follows.
-- Implementing `esd_init` (13-pin push-pull output configuration) and `esd_show_digit` (writing a precomputed segment bitmask + asserting one digit-select line).
-- A 4-digit countdown application: cycling all four digit positions fast enough for persistence of vision to read as "four digits at once," then a second pass counting down on all digits simultaneously.
-- Software timing: implementing a millisecond delay from first principles (see [`utils`](../modules/utils)) before a proper timer-based version exists ([`06_Blinky_Dot`](../06_Blinky_Dot) onward).
+## Objectives
 
-See [`esd`](../modules/esd)'s README for the concrete pin mapping and API.
+- Control a multiplexed four-digit seven-segment display.
+- Separate hardware-specific code from the application.
+- Introduce the first reusable driver of the repository.
+- Build more complex GPIO applications on top of the STM32 HAL.
+
+## Implementation
+
+The application performs the following tasks:
+
+- Initializes the `esd` driver.
+- Displays the digits `9 → 0` on each display position.
+- Demonstrates both individual digit selection and simultaneous activation of
+  all four positions.
+- Uses a software delay between updates to make the countdown visible.
+
+Unlike the previous exercise, the application no longer manipulates GPIO pins
+directly. All hardware access is delegated to the `esd` module.
+
+## Repository progression
+
+This exercise introduces the modular architecture used throughout the
+repository.
+
+From this point onward, reusable peripheral drivers are placed inside the
+[`modules`](../modules) directory and shared by multiple projects instead of
+duplicating hardware-specific code inside each application.
