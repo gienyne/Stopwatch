@@ -1,14 +1,39 @@
-# 04_Potis — ADC in polling mode
+# ADC in Polling Mode
 
-Introduces the ADC peripheral: reading the two potentiometers on the Waveshare Analog Test Board via [`potis`](../modules/potis), one-shot polling mode, displayed live on the LCD.
+This exercise introduces the STM32 ADC peripheral by reading the two
+potentiometers available on the Waveshare Analog Test Board.
 
-## What this covers
+The application performs single conversions in polling mode, converts the
+measured voltage to millivolts and visualizes both channels on the LCD using
+text and bar graphs.
 
-- Identifying which GPIO pins and ADC input channels the Analog Test Board's potentiometers are wired to, from the board schematics and the controller datasheet.
-- Configuring a GPIO pin for analog input, and why analog inputs need **no** pull-up/pull-down (a pull resistor would bias the very voltage the ADC is trying to measure — pull resistors only make sense for digital logic levels).
-- One-shot conversion in polling mode: start ADC → poll for end-of-conversion → read result → stop ADC, repeated on every call rather than left running continuously (that comes next, in [`05_Potis_DMA`](../05_Potis_DMA)).
-- Sample-time / conversion-time arithmetic: with `ADC_CLOCK_SYNC_PCLK_DIV6`, 12-bit resolution, and `ADC_SAMPLETIME_3CYCLES`, deriving the per-sample conversion time and resulting sample rate from the ADC clock (see [`docs/adc-dma.md`](../docs/adc-dma.md)).
-- The three ways the HAL exposes a conversion result — polling, interrupt, and DMA — and why this exercise deliberately starts with the simplest (polling) before [`05_Potis_DMA`](../05_Potis_DMA) moves to the third.
-- Rendering both potentiometers as bar graphs plus their millivolt value as text on the LCD.
+## Objectives
 
-See [`potis`](../modules/potis) for the pin/channel mapping and API.
+- Configure GPIO pins as analog inputs.
+- Perform single ADC conversions in polling mode.
+- Convert raw ADC values into millivolts.
+- Visualize analog measurements on the LCD.
+
+## Implementation
+
+The application periodically reads both potentiometers connected to ADC1.
+
+For each measurement it:
+
+- selects the desired ADC channel,
+- starts a software-triggered conversion,
+- waits until the conversion completes,
+- reads the 12-bit ADC result,
+- converts it into millivolts,
+- displays both the numeric value and a graphical bar graph.
+
+The visualization is implemented using the reusable `my_lcd` module introduced
+in the previous exercise.
+
+## Repository progression
+
+This project introduces analog data acquisition.
+
+The following exercise replaces the polling approach with DMA-based continuous
+sampling, allowing the CPU to process measurements without waiting for each
+conversion to complete.
