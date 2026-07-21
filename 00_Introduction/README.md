@@ -1,18 +1,40 @@
-# 00_Introduction — toolchain & debugger
+# Introduction
 
-First project in the series: no custom drivers yet, just the STM32CubeIDE/CMSIS/HAL toolchain and the on-chip debugger, using the Discovery board's two built-in LEDs (green on PG13, red on the adjacent pin).
+The first exercise introduces the STM32CubeIDE development environment and the
+STM32 HAL programming model.
 
-## What this covers
+Using only the two on-board LEDs of the STM32F429 Discovery board, the project
+demonstrates the fundamental workflow of configuring GPIO peripherals and
+controlling digital outputs before introducing reusable drivers in the following
+exercises.
 
-- **CMSIS / HAL project layout** — how a CubeIDE project is structured, what CMSIS provides versus the vendor HAL, and why CMSIS exists at all (a standardized register/peripheral abstraction so the same application-level code ports across ARM Cortex-M vendors with minimal change).
-- **Cortex-M4 basics** — core architecture, the Thumb-2 instruction set, and the FPU (used later for the PI controller's floating-point math in [`P1_Fan_Control`](../P1_Fan_Control)).
-- **Debugger workflow**:
-  - Breakpoints vs. watchpoints (halt on reaching a line vs. halt on a memory/register access)
-  - Step Into vs. Step Over
-  - Inspecting and editing live variable values
-  - Inspecting peripheral/core registers directly
-- **GPIO output, the direct way** — toggling both on-board LEDs via `HAL_GPIO_TogglePin`/`WritePin`/`SetPin`/`ResetPin`, single- and combined-pin writes, as the baseline that [`esd`](../modules/esd) later scales up to 13 simultaneous GPIO lines.
+## Objectives
 
-## Why it matters later
+- Initialize the STM32 HAL.
+- Configure GPIO pins as digital outputs.
+- Control the on-board LEDs using the HAL GPIO API.
+- Become familiar with the build, flash and debug workflow.
 
-Every subsequent project in this repo builds on the GPIO/HAL fundamentals introduced here — in particular the distinction between configuring a pin (`HAL_GPIO_Init`) and driving it (`HAL_GPIO_WritePin`/`TogglePin`), which becomes non-trivial once 13+ pins need coordinated multiplexing in [`esd`](../modules/esd).
+## Implementation
+
+The application performs the following tasks:
+
+- Initializes the STM32 HAL.
+- Enables the GPIO peripheral clock.
+- Configures the green and red LEDs as push-pull outputs.
+- Demonstrates single and multiple GPIO writes using `HAL_GPIO_WritePin()`.
+- Toggles the LEDs using `HAL_GPIO_TogglePin()`.
+- Uses `HAL_Delay()` to create a visible blinking pattern.
+
+No custom drivers are used at this stage. Every GPIO operation is performed
+directly through the STM32 HAL to expose the basic programming model used
+throughout the repository.
+
+## Repository progression
+
+This project establishes the GPIO programming model reused by every subsequent
+exercise.
+
+The same HAL functions introduced here later become the foundation of the
+[`esd`](../modules/esd) driver, which multiplexes a four-digit seven-segment
+display across thirteen GPIO pins.
