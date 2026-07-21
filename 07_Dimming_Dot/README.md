@@ -1,11 +1,29 @@
-# 07_Dimming_Dot — PWM duty-cycle dimming
+# PWM Brightness Control
 
-Reuses [`06_Blinky_Dot`](../06_Blinky_Dot)'s Output-Compare setup, but sweeps duty cycle instead of frequency: dims the dot segment's *perceived* brightness rather than blinking it visibly.
+This exercise extends the timer-based PWM implementation introduced in the
+previous exercise by controlling the duty cycle instead of the output frequency.
 
-## What this covers
+Rather than producing a visible blinking effect, the PWM signal operates at a
+high enough frequency for the human eye to perceive only the average brightness
+of the DOT segment.
 
-- The perceptual basis for PWM dimming: the human eye can't temporally resolve more than ~25 frames/second, so at a sufficiently high blink frequency it perceives the time-averaged brightness rather than discrete on/off flicker.
-- Driving the same Output-Compare channel from [`06_Blinky_Dot`](../06_Blinky_Dot), but varying the compare value (duty cycle) instead of the timer period (frequency).
-- Mapping a potentiometer reading to a duty-cycle percentage, giving continuous (in appearance) brightness control via [`dot`](../modules/dot)'s dimming functions.
+## Objectives
 
-See [`dot`](../modules/dot) for the API.
+- Understand Pulse Width Modulation (PWM).
+- Control LED brightness by varying the duty cycle.
+- Map an analog input to a PWM output.
+
+## Implementation
+
+The application demonstrates:
+
+- PWM generation using Timer 1.
+- Fixed PWM frequency with a variable duty cycle.
+- Brightness control using one of the potentiometers.
+- Continuous duty-cycle updates based on ADC measurements.
+
+## Repository progression
+
+This exercise builds directly on the timer configuration introduced in the
+previous project and demonstrates another common application of PWM beyond
+simple blinking.
