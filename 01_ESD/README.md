@@ -20,7 +20,7 @@ reduced to initializing the driver and updating the displayed digits.
 The application performs the following tasks:
 
 - Initializes the `esd` driver.
-- Displays the digits `9 → 0` on each display position.
+- Displays the digits `9 -> 0` on each display position.
 - Demonstrates both individual digit selection and simultaneous activation of
   all four positions.
 - Uses a software delay between updates to make the countdown visible.
