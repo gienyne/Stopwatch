@@ -189,3 +189,10 @@ Development was carried out incrementally.
 
 - `modules/env_sensor`
 - `modules/my_lcd`
+
+## Demo
+
+https://github.com/user-attachments/assets/960b9115-e06d-42fd-94cb-a20e317b4971
+
+
+
