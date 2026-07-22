@@ -19,7 +19,7 @@ For a 12-bit ADC running from a 3.3 V reference:
 | Input Voltage | ADC Value |
 |--------------:|----------:|
 | 0.0 V | 0 |
-| 1.65 V | ≈ 2048 |
+| 1.65 V | = 2048 |
 | 3.3 V | 4095 |
 
 The conversion result can then be processed by software exactly like any other
@@ -56,9 +56,7 @@ Sampling + Resolution
 Resulting in
 
 ```
-15 / 14 MHz
-
-≈ 1.07 µs
+15 / 14 MHz ≈ 1.07 µs
 ```
 
 per conversion.
