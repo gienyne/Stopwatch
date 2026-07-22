@@ -2,11 +2,8 @@
 
 > A closed-loop DC fan speed controller implemented on the STM32F429 Discovery platform using hardware timers, ADC + DMA, EXTI interrupts and a discrete PI controller.
 
-<p align="center">
-    <img src="docs/images/fan_setup.jpg" width="750">
-</p>
-
 ---
+## Demo
 
 ## Project Overview
 
@@ -268,5 +265,3 @@ Possible future extensions include
 - Data logging
 - FreeRTOS-based implementation
 - Temperature-dependent fan control
-
-https://github.com/user-attachments/assets/582b8df8-908f-4412-a9df-2af458d21a29
