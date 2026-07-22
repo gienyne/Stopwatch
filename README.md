@@ -212,7 +212,8 @@ Features
 
 ---
 
-<img width="793" height="857" alt="image" src="https://github.com/user-attachments/assets/639b0004-0b6f-4409-b16f-61e2bc5f60b3" />
+![Uploading image.png…]()
+
 
 
 # Embedded Topics Covered
