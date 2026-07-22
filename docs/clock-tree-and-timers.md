@@ -108,7 +108,7 @@ The timer now increments exactly once every millisecond.
 The timer counts upward until it reaches the Auto-Reload Register (ARR).
 
 ```text
-0 → 1 → 2 → ... → ARR
+0 -> 1 -> 2 -> ... -> ARR
                   │
                   ▼
              Update Event
