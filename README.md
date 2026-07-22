@@ -35,6 +35,20 @@ stack.
 
 ---
 
+# Design Philosophy
+
+Unlike traditional laboratory assignments where every exercise starts from
+scratch, this repository follows an incremental engineering approach.
+
+Each project introduces one new embedded concept while reusing the modules
+developed previously. Drivers are implemented once, documented, improved over
+time and shared across every subsequent project.
+
+The result is a progressively growing embedded software stack rather than a
+collection of unrelated exercises.
+
+---
+
 ## Learning Journey
 
 The repository follows the same progression as an embedded engineering course,
@@ -252,4 +266,4 @@ Each folder is an independent STM32CubeIDE project.
 
 # License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
