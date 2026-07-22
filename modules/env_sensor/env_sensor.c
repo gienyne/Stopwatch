@@ -2,7 +2,7 @@
 /**
  **************************************************
  * @file        P1_Fan.c
- * @author      Dimitry Ntofeu Nyatcha, Sidal Güray
+ * @author      Dimitry Ntofeu Nyatcha
  * @version     v1.0
  * @date        07.07.2025
  * @brief       Modul zur Initialisierung von BME280 Sensor und Can Bus
