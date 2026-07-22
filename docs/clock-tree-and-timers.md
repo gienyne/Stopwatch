@@ -1,253 +1,270 @@
 # Clock Tree & Timers
 
-This document explains the clock configuration and timer concepts used
-throughout this repository. Most exercises and projects rely on STM32 timers,
-whether for delays, PWM generation, periodic sampling, stopwatch operation, or
-closed-loop motor control.
+Timers are among the most versatile peripherals available on STM32
+microcontrollers.
+
+Almost every real-time feature implemented in this repository relies on one or
+more hardware timers:
+
+- PWM generation for the fan controller
+- LED blinking and dimming
+- Stopwatch time base
+- One-Pulse Mode
+- RPM measurement
+- Periodic control loops
+
+Understanding how timers obtain their clock is therefore essential.
 
 ---
 
 # STM32F429 Clock Tree
 
-The STM32F429 is configured to run at **168 MHz** using the external **8 MHz
-HSE crystal** and the internal PLL.
+The STM32F429 used in this repository runs at a maximum system frequency of
+**168 MHz**.
+
+The system clock is generated from the external 8 MHz crystal using the main
+PLL.
 
 ```text
-          8 MHz HSE
-               │
-          PLLM = 8
-               ▼
-         1 MHz VCO input
-               │
-         PLLN = 336
-               ▼
-        336 MHz VCO output
-               │
-          PLLP = 2
-               ▼
-        SYSCLK = 168 MHz
-               │
-     ┌─────────┴─────────┐
-     ▼                   ▼
-AHB = 168 MHz      APB1 = 42 MHz
-                        │
-                 Timer clock = 84 MHz
-
-                   APB2 = 84 MHz
-                        │
-                 Timer clock = 168 MHz
+                 8 MHz HSE
+                     │
+                ÷ PLLM = 8
+                     │
+                1 MHz VCO input
+                     │
+               × PLLN = 336
+                     │
+               336 MHz VCO
+                     │
+                ÷ PLLP = 2
+                     │
+              168 MHz SYSCLK
+                     │
+      ┌──────────────┴──────────────┐
+      │                             │
+      ▼                             ▼
+ AHB Prescaler                  APB Prescalers
+      │                             │
+ 168 MHz HCLK           APB1 = 42 MHz
+                        APB2 = 84 MHz
 ```
 
-One STM32 peculiarity is that timers connected to an APB bus automatically
-receive **twice the APB clock** whenever the APB prescaler is greater than one.
+The clock tree distributes different clock frequencies to the various buses and
+peripherals inside the microcontroller.
 
-Therefore:
+---
+
+# Timer Clock Doubling
+
+One STM32 feature often surprises beginners.
+
+Whenever an APB prescaler is greater than 1, the timers connected to that bus
+automatically receive **twice** the APB clock frequency.
+
+For this project:
 
 | Bus | Bus Clock | Timer Clock |
 |------|----------:|------------:|
 | APB1 | 42 MHz | 84 MHz |
 | APB2 | 84 MHz | 168 MHz |
 
-Ignoring this rule is one of the most common causes of incorrect timer
-calculations.
+This means two timers configured with identical prescalers may run at different
+speeds simply because they are connected to different buses.
+
+Understanding this behavior avoids many timer configuration mistakes.
 
 ---
 
 # Timer Frequency Calculation
 
-A timer first divides its input clock using the **prescaler**, then counts up
-until it reaches the **auto-reload register (ARR)**.
+Every timer first divides its input clock using the prescaler.
 
-The timer tick frequency is
+```
+Timer Tick Frequency
 
-```text
-Timer Tick =
-Timer Clock / (Prescaler + 1)
+timer_clock
+──────────────
+Prescaler + 1
 ```
 
-The update event frequency becomes
+Example:
 
-```text
-Update Frequency =
-Timer Tick / (ARR + 1)
 ```
+Timer Clock = 84 MHz
+Desired Tick = 1 kHz
 
----
+Prescaler =
+84 000 000 / 1 000 − 1
 
-# Example: 1 kHz Timer
-
-Assume a timer clock of **84 MHz**.
-
-To obtain a timer tick of **1 kHz**:
-
-```text
-Prescaler + 1 = 84 000
 Prescaler = 83 999
 ```
 
-The timer now increments once every millisecond.
+The timer now increments exactly once every millisecond.
 
 ---
 
-# Example: 25 kHz PWM
+# Auto-Reload Register (ARR)
 
-The fan controller generates its PWM signal at **25 kHz**.
-
-Instead of directly dividing 168 MHz to 25 kHz, the implementation first creates
-a timer clock of **2.5 MHz**:
+The timer counts upward until it reaches the Auto-Reload Register (ARR).
 
 ```text
-168 MHz
-   │
-Prescaler
-   ▼
-2.5 MHz timer tick
+0 → 1 → 2 → ... → ARR
+                  │
+                  ▼
+             Update Event
 ```
 
-Using
+The resulting overflow frequency becomes
 
-```text
-ARR = 99
+```
+Overflow Frequency
+
+Timer Tick
+────────────
+ARR + 1
 ```
 
-produces
-
-```text
-2.5 MHz / 100 = 25 kHz
-```
-
-Keeping the ARR at exactly **100 counts** also means the compare register maps
-directly to duty cycle percentages.
-
-| Compare Value | Duty Cycle |
-|--------------:|-----------:|
-| 0 | 0 % |
-| 25 | 25 % |
-| 50 | 50 % |
-| 75 | 75 % |
-| 100 | 100 % |
-
-This greatly simplifies the PI controller implementation.
+Both Prescaler and ARR therefore determine the final timing behavior.
 
 ---
 
-# PWM (Pulse Width Modulation)
+# Example: Two-Minute Timer
 
-PWM rapidly switches a digital output between HIGH and LOW while varying the
-percentage of time the signal remains HIGH.
+Suppose a timer should overflow every two minutes.
+
+```
+120 seconds
+
+↓
+
+120 000 timer ticks
+(at 1 kHz)
+```
+
+Since
+
+```
+120 000 > 65 535
+```
+
+a standard 16-bit timer cannot represent this value directly.
+
+Possible solutions are
+
+- use a 32-bit timer
+- reduce the timer tick frequency
+- count multiple shorter overflows in software
+
+Several projects inside this repository use the third approach.
+
+---
+
+# PWM Generation
+
+PWM (Pulse Width Modulation) is generated entirely by hardware.
+
+Instead of toggling a GPIO in software, the timer automatically produces a
+periodic waveform.
 
 ```text
 100 %
 
 ████████████████████
 
-75 %
-
-██████████████______
-
 50 %
 
-████████________
+████████      ██████
 
-25 %
+20 %
 
-████______
+████      ████
 ```
 
-The average voltage seen by the load depends on the duty cycle.
+Changing the Compare Register (CCR) modifies the duty cycle without affecting
+the signal frequency.
 
-PWM therefore allows a digital pin to control
+This repository uses PWM for
 
-- LED brightness
-- motor speed
-- fan speed
-- power delivered to a load
-
-without generating an analog voltage.
+- LED brightness control
+- Fan speed control
 
 ---
 
 # Output Compare
 
-Output Compare uses the timer to trigger an action whenever the counter reaches
-a predefined compare value.
+Output Compare compares the current timer counter with a predefined compare
+value.
 
-Unlike PWM, Output Compare does not necessarily generate a periodic waveform.
+Whenever both values become equal, the timer automatically performs an action.
 
-In this repository it is used for
+Examples include
 
-- LED blinking
-- staircase-light timing
-- stopwatch timing
+- toggle an output pin
+- generate an interrupt
+- trigger another peripheral
 
-without software polling loops.
+Unlike PWM, Output Compare is often used for precisely timed events rather than
+continuous waveforms.
+
+The LED blinking exercises make extensive use of Output Compare mode.
 
 ---
 
 # One-Pulse Mode
 
-One-Pulse Mode automatically stops a timer after a single timing interval.
+One-Pulse Mode allows a timer to execute exactly one timing cycle before
+stopping automatically.
 
 ```text
 Start
-  │
-  ▼
+
+│
+
 Timer counts
-  │
-  ▼
-ARR reached
-  │
-  ▼
-Timer stops automatically
+
+│
+
+Overflow
+
+│
+
+Timer stops
 ```
 
-This is ideal for applications such as a staircase-light timer, where the LED
-should remain ON for a fixed duration before switching OFF automatically.
+This behavior is ideal for
+
+- staircase lighting
+- automatic timeouts
+- delayed switching
+
+The staircase-light exercise uses this feature so the application never has to
+monitor elapsed time in software.
 
 ---
 
-# 16-bit vs 32-bit Timers
+# Timers Used Throughout This Repository
 
-Most STM32 timers are **16-bit**, meaning they can count up to
-
-```text
-65 535
-```
-
-before overflowing.
-
-Long timing intervals therefore require either
-
-- a larger prescaler,
-- overflow counting in software,
-- or a 32-bit timer such as TIM2 or TIM5.
-
-The custom delay implementation in the `utils` module uses **TIM2**, allowing
-long delays without overflow handling.
-
----
-
-# Where Timers Are Used
-
-Timers appear throughout this repository.
-
-| Project | Purpose |
-|---------|---------|
-| Blinky Dot | Hardware LED blinking |
+| Project | Timer Usage |
+|----------|-------------|
+| Blinky Dot | Output Compare LED blinking |
 | Dimming Dot | PWM brightness control |
-| Stopwatch | High-resolution time measurement |
-| Fan Controller | PWM generation, tachometer timing, PI control period |
-| Weather Station | Periodic 1 Hz sensor sampling |
+| Stopwatch | High-resolution time base |
+| Fan Controller | PWM generation, RPM measurement and PI update timer |
+| Weather Station | Periodic sensor acquisition |
+
+Each exercise builds on the previous one, progressively introducing additional
+timer capabilities.
 
 ---
 
-# Key Takeaways
+# Design Takeaways
 
-- Understand the STM32 clock tree before configuring timers.
-- Remember that timer clocks are often **twice the APB clock**.
-- Prescaler controls timer resolution.
-- ARR controls the timer period.
-- PWM controls average output power through duty cycle.
-- Output Compare generates hardware events without CPU polling.
-- One-Pulse Mode is useful for one-shot timing applications.
-- Timer peripherals are the foundation of most real-time embedded systems.
+Several important embedded-system design principles emerge from these exercises.
+
+- Let hardware perform repetitive work whenever possible.
+- Configure timers once instead of polling inside software loops.
+- Separate timing generation from application logic.
+- Use interrupts only when software intervention is required.
+
+Offloading periodic work to dedicated peripherals significantly reduces CPU load
+and leads to more deterministic real-time behavior.
