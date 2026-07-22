@@ -1,50 +1,301 @@
 # ADC & DMA
 
-## Sample timing
+Several projects in this repository require continuously reading analog signals,
+such as potentiometer positions for LED brightness control and fan speed
+regulation.
 
-With `ADC_CLOCK_SYNC_PCLK_DIV6` (ADC clock = APB2/6 = 84 MHz/6 = 14 MHz), 12-bit resolution, and a 3-cycle sampling time:
+The STM32 provides three different approaches for acquiring ADC data, ranging
+from simple polling to fully autonomous DMA transfers.
+
+---
+
+# Analog-to-Digital Conversion
+
+The Analog-to-Digital Converter (ADC) converts an input voltage into a digital
+value.
+
+For a 12-bit ADC running from a 3.3 V reference:
+
+| Input Voltage | ADC Value |
+|--------------:|----------:|
+| 0.0 V | 0 |
+| 1.65 V | ≈ 2048 |
+| 3.3 V | 4095 |
+
+The conversion result can then be processed by software exactly like any other
+integer.
+
+---
+
+# ADC Conversion Time
+
+The total conversion time depends on
+
+- the ADC clock
+- the configured sampling time
+- the ADC resolution
+
+For this project:
+
+| Parameter | Value |
+|-----------|-------|
+| ADC Clock | 14 MHz |
+| Resolution | 12 bit |
+| Sampling Time | 3 cycles |
+
+Therefore
 
 ```
-T_conv = sampling_cycles + resolution_cycles = 3 + 12 = 15 ADC clock cycles
-T_conv (time) = 15 / 14 MHz ≈ 71.4 ns per sample
-Sample rate = 1 / 71.4 ns ≈ 14.0 Msps (channel throughput ceiling)
+Conversion cycles
+
+Sampling + Resolution
+
+3 + 12 = 15 cycles
 ```
 
-The 12 "resolution cycles" come from the successive-approximation conversion needing one cycle per output bit at 12-bit resolution — this is what the datasheet's total conversion time table accounts for beyond the configurable sampling time.
+Resulting in
 
-## Why analog inputs need no pull-up/down
+```
+15 / 14 MHz
 
-A GPIO in analog mode isn't being read as a logic level at all — the ADC needs the pin's voltage to float freely between 0 V and V<sub>REF</sub> so it can measure it. A pull resistor would bias that voltage toward one rail, corrupting the measurement; pull-ups/downs only make sense for a *digital* input, where the goal is a well-defined logic level rather than an arbitrary analog value.
+≈ 1.07 µs
+```
 
-## Getting the conversion result: three options
+per conversion.
 
-The HAL supports three ways to retrieve an ADC conversion result:
+This corresponds to a theoretical maximum throughput of approximately
 
-1. **Polling** — `HAL_ADC_Start` / `HAL_ADC_PollForConversion` / `HAL_ADC_GetValue`; simplest, blocks the caller ([`potis`](../drivers/potis)).
-2. **Interrupt** — `HAL_ADC_Start_IT`, result collected in `HAL_ADC_ConvCpltCallback`.
-3. **DMA** — `HAL_ADC_Start_DMA`; the ADC streams results directly into memory with zero CPU involvement per sample ([`potis_dma`](../drivers/potis_dma)).
+```
+≈ 933 kSamples/s
+```
 
-## ADC + DMA configuration order
+per ADC channel.
 
-The correct initialization order is DMA first, then ADC, then start:
+---
 
-1. Configure the DMA stream/channel (destination buffer, circular mode if continuous sampling is wanted).
-2. Configure the ADC (scan mode for multiple channels, continuous conversion) and link it to the DMA request.
-3. Call `HAL_ADC_Start_DMA` to kick the pipeline off.
+# Why Analog Pins Need No Pull-Up or Pull-Down
 
-Reference Manual §13.8 ("Data management" / "Using the DMA") documents this dependency; getting the order wrong (e.g. starting the ADC before the DMA stream is armed) drops the first conversion(s).
+Unlike digital GPIOs, an analog input is not interpreted as HIGH or LOW.
 
-### DMA request mapping (STM32F429, Reference Manual Tables 43/44)
+Instead, the ADC measures the actual voltage present on the pin.
 
-| Peripheral | DMA controller | Stream | Channel |
-|---|---|---|---|
-| TIM1 Channel 3 | DMA2 | Stream 6 | Channel 6 |
-| ADC3 | DMA2 | Stream 0 or 1 | Channel 2 |
+Adding a pull-up or pull-down resistor would shift that voltage toward one of the
+supply rails and therefore distort the measurement.
+
+For this reason, STM32 analog inputs are configured with
+
+```
+GPIO_MODE_ANALOG
+GPIO_NOPULL
+```
+
+---
+
+# Three Ways to Read the ADC
+
+STM32 HAL supports three different acquisition methods.
+
+## 1. Polling
+
+```c
+HAL_ADC_Start();
+HAL_ADC_PollForConversion();
+HAL_ADC_GetValue();
+```
+
+Advantages
+
+- simplest implementation
+- easy to understand
+
+Disadvantages
+
+- blocks the CPU while waiting
+- unsuitable for continuous sampling
+
+This method is used by the **potis** module.
+
+---
+
+## 2. Interrupt
+
+```c
+HAL_ADC_Start_IT();
+```
+
+The ADC generates an interrupt whenever a conversion finishes.
+
+Advantages
+
+- CPU can perform other work meanwhile
+
+Disadvantages
+
+- every sample still generates one interrupt
+
+Useful for medium sampling rates.
+
+---
+
+## 3. DMA
+
+```c
+HAL_ADC_Start_DMA();
+```
+
+The ADC writes conversion results directly into memory without CPU involvement.
+
+```text
+ADC
+ │
+ ▼
+DMA Controller
+ │
+ ▼
+RAM Buffer
+```
+
+Advantages
+
+- no interrupt per sample
+- very low CPU load
+- ideal for continuous measurements
+
+This method is used throughout the later exercises, especially in
+**potis_dma** and the **Fan Controller**.
+
+---
+
+# Correct Initialization Order
+
+The DMA controller must already be prepared before the ADC starts producing
+samples.
+
+The correct sequence is therefore
+
+```text
+Initialize DMA
+        │
+        ▼
+Initialize ADC
+        │
+        ▼
+Start ADC + DMA
+```
+
+Starting the ADC before enabling DMA may cause the first conversion results to
+be lost.
+
+---
+
+# Circular DMA
+
+For continuously changing analog signals, DMA is configured in **Circular Mode**.
+
+```text
+Buffer
+
++----+----+----+----+----+
+| A0 | A1 | A2 | A3 | A4 |
++----+----+----+----+----+
+  ▲                       │
+  └───────────────────────┘
+```
+
+Once the last element has been written, DMA automatically continues at the first
+element again.
+
+No software intervention is required.
+
+---
+
+# DMA Request Mapping
+
+On STM32F429 every peripheral is connected to specific DMA controllers,
+streams and channels.
+
+Examples used throughout this repository:
+
+| Peripheral | DMA | Stream | Channel |
+|------------|------|--------|---------|
+| ADC3 | DMA2 | Stream 0 / 1 | Channel 2 |
+| TIM1 CH3 | DMA2 | Stream 6 | Channel 6 |
 | DAC2 | DMA1 | Stream 6 | Channel 7 |
 
-## Averaging trade-off: divide by N vs. divide by N/4
+Selecting an incorrect mapping prevents DMA transfers from occurring.
 
-[`potis_dma`](../drivers/potis_dma) averages a 100-sample ring buffer per channel. Dividing the running sum by the true sample count (100) gives an honest millivolt reading. Dividing by only a quarter of that (25) instead of 100 artificially amplifies the result:
+---
 
-- **Upside**: more visible resolution — useful for weak signals, or to make small bar-graph movements visible without extra hardware gain.
-- **Downside**: the output is no longer a real voltage (it can't be interpreted as mV or % directly), and a fixed-width accumulator (e.g. `uint16_t`) is more likely to overflow since the scaled sum runs closer to — or past — its numeric range.
+# Noise Reduction by Averaging
+
+Analog measurements naturally contain small fluctuations.
+
+Instead of using every raw sample directly, the project averages multiple
+measurements.
+
+```text
+ADC Samples
+
+1020
+1024
+1023
+1021
+1025
+
+↓
+
+Average
+
+1022.6
+```
+
+Averaging significantly reduces random measurement noise while introducing only
+a small delay.
+
+---
+
+# Why DMA Matters
+
+Without DMA:
+
+```text
+ADC
+ │
+ ▼
+CPU
+ │
+ ▼
+RAM
+```
+
+The CPU must actively copy every sample.
+
+With DMA:
+
+```text
+ADC
+ │
+ ▼
+DMA
+ │
+ ▼
+RAM
+```
+
+The transfer happens entirely in hardware.
+
+The CPU is only involved when the application actually needs the data.
+
+---
+
+# Design Takeaways
+
+Several important embedded-system principles are illustrated by these exercises.
+
+- Polling is simple but inefficient.
+- Interrupts reduce idle waiting but still consume CPU time.
+- DMA enables continuous high-speed sampling with almost no processor overhead.
+- Averaging improves measurement stability without additional hardware.
+
+For continuously sampled sensors, combining the ADC with Circular DMA is
+generally the most efficient solution.
