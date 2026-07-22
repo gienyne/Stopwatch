@@ -1,7 +1,7 @@
 # P2_Weatherstation
 
 A distributed embedded weather station built around the **Bosch BME280** and the
-**STM32F429 bxCAN peripheral**.
+**STM32F429 CAN peripheral**.
 
 Each node periodically measures **temperature**, **pressure**, and
 **humidity**, publishes the measurements over a shared **CAN bus**, and can
