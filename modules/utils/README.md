@@ -1,6 +1,6 @@
-# utils — shared helpers with no natural home elsewhere
+# utils — shared helper functions
 
-Small cross-cutting functions used by several other modules.
+Small utility functions reused by multiple modules.
 
 ## API
 
@@ -10,10 +10,22 @@ void utils_gpio_port_write(GPIO_TypeDef *GPIO, uint16_t GPIO_PIN);
 uint16_t utils_gpio_port_read(GPIO_TypeDef *GPIO);
 ```
 
-- **`utils_delay_ms`** — blocking millisecond delay. Started on the HAL's `SysTick`-based `HAL_Delay`, then re-implemented on a hardware timer once precise, non-SysTick-dependent timing was needed elsewhere in the project (timers keep counting independent of interrupt latency on `SysTick`, which matters once other interrupts are competing for CPU time).
-- **`utils_gpio_port_write`** — writes an entire 16-bit port in one register access (`GPIOx->ODR` write) instead of one `HAL_GPIO_WritePin` call per bit, so a multi-bit value (e.g. a binary pattern across several pins of the same port) is set and cleared atomically.
-- **`utils_gpio_port_read`** — the read-side counterpart, returning the whole port's input register as a 16-bit bitmask.
+## Delay
 
-## Why these live here
+`utils_delay_ms()` provides a simple blocking millisecond delay.
 
-Both GPIO helpers are used by [`joystick`](../joystick), [`dot`](../dot)'s staircase-light logic, and elsewhere — functions that don't belong to one specific peripheral driver, or that are useful across several, land in `utils` rather than being duplicated.
+The project originally implemented this as a software delay (Abgabe 1), then later migrated to a hardware timer (TIM2) during the timer chapter. The timer counts at 1 kHz, so one timer tick corresponds to exactly 1 ms. The function simply waits until the desired number of timer ticks has elapsed.
+
+Although blocking delays should generally be avoided in production firmware, they are perfectly adequate here for short waits during initialization or simple user-interface tasks.
+
+## GPIO helpers
+
+`utils_gpio_port_write()` writes an entire 16-bit GPIO output register (`GPIOx->ODR`) in one operation.
+
+`utils_gpio_port_read()` returns the complete GPIO input register (`GPIOx->IDR`) as a 16-bit value.
+
+Working on the whole port instead of individual pins is convenient for peripherals such as the joystick or the staircase-light example, where several input bits are evaluated together.
+
+## Why this module exists
+
+These helper functions are intentionally kept separate from the peripheral drivers because they are shared across multiple modules (joystick, dot, env_sensor, etc.) and do not naturally belong to any single hardware component.
