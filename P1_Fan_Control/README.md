@@ -27,6 +27,10 @@ The LCD displays the target speed, measured speed and graphical bar graphs in re
 - Tachometer-based RPM measurement
 - EXTI interrupt processing
 - Hardware timer based time measurement
+
+https://github.com/user-attachments/assets/582b8df8-908f-4412-a9df-2af458d21a29
+
+
 - ADC acquisition using DMA
 - Circular DMA buffer
 - Median filtering of tachometer measurements
@@ -268,3 +272,5 @@ Possible future extensions include
 - Data logging
 - FreeRTOS-based implementation
 - Temperature-dependent fan control
+
+https://github.com/user-attachments/assets/582b8df8-908f-4412-a9df-2af458d21a29
