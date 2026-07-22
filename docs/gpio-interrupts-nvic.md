@@ -130,8 +130,8 @@ STM32 supports three trigger modes.
 
 | Mode | Trigger |
 |------|----------|
-| `GPIO_MODE_IT_RISING` | Low → High |
-| `GPIO_MODE_IT_FALLING` | High → Low |
+| `GPIO_MODE_IT_RISING` | Low -> High |
+| `GPIO_MODE_IT_FALLING` | High -> Low |
 | `GPIO_MODE_IT_RISING_FALLING` | Both edges |
 
 Example:
