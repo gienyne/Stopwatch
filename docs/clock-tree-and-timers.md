@@ -1,53 +1,253 @@
 # Clock Tree & Timers
 
-## System clock configuration
+This document explains the clock configuration and timer concepts used
+throughout this repository. Most exercises and projects rely on STM32 timers,
+whether for delays, PWM generation, periodic sampling, stopwatch operation, or
+closed-loop motor control.
 
-This project runs the STM32F429 at 168 MHz SYSCLK, derived from an 8 MHz HSE crystal through the main PLL:
+---
 
+# STM32F429 Clock Tree
+
+The STM32F429 is configured to run at **168 MHz** using the external **8 MHz
+HSE crystal** and the internal PLL.
+
+```text
+          8 MHz HSE
+               │
+          PLLM = 8
+               ▼
+         1 MHz VCO input
+               │
+         PLLN = 336
+               ▼
+        336 MHz VCO output
+               │
+          PLLP = 2
+               ▼
+        SYSCLK = 168 MHz
+               │
+     ┌─────────┴─────────┐
+     ▼                   ▼
+AHB = 168 MHz      APB1 = 42 MHz
+                        │
+                 Timer clock = 84 MHz
+
+                   APB2 = 84 MHz
+                        │
+                 Timer clock = 168 MHz
 ```
-HSE (8 MHz)
-  │  ÷ PLLM (8)         → VCO input  = 1 MHz     (must land in 1–2 MHz)
+
+One STM32 peculiarity is that timers connected to an APB bus automatically
+receive **twice the APB clock** whenever the APB prescaler is greater than one.
+
+Therefore:
+
+| Bus | Bus Clock | Timer Clock |
+|------|----------:|------------:|
+| APB1 | 42 MHz | 84 MHz |
+| APB2 | 84 MHz | 168 MHz |
+
+Ignoring this rule is one of the most common causes of incorrect timer
+calculations.
+
+---
+
+# Timer Frequency Calculation
+
+A timer first divides its input clock using the **prescaler**, then counts up
+until it reaches the **auto-reload register (ARR)**.
+
+The timer tick frequency is
+
+```text
+Timer Tick =
+Timer Clock / (Prescaler + 1)
+```
+
+The update event frequency becomes
+
+```text
+Update Frequency =
+Timer Tick / (ARR + 1)
+```
+
+---
+
+# Example: 1 kHz Timer
+
+Assume a timer clock of **84 MHz**.
+
+To obtain a timer tick of **1 kHz**:
+
+```text
+Prescaler + 1 = 84 000
+Prescaler = 83 999
+```
+
+The timer now increments once every millisecond.
+
+---
+
+# Example: 25 kHz PWM
+
+The fan controller generates its PWM signal at **25 kHz**.
+
+Instead of directly dividing 168 MHz to 25 kHz, the implementation first creates
+a timer clock of **2.5 MHz**:
+
+```text
+168 MHz
+   │
+Prescaler
+   ▼
+2.5 MHz timer tick
+```
+
+Using
+
+```text
+ARR = 99
+```
+
+produces
+
+```text
+2.5 MHz / 100 = 25 kHz
+```
+
+Keeping the ARR at exactly **100 counts** also means the compare register maps
+directly to duty cycle percentages.
+
+| Compare Value | Duty Cycle |
+|--------------:|-----------:|
+| 0 | 0 % |
+| 25 | 25 % |
+| 50 | 50 % |
+| 75 | 75 % |
+| 100 | 100 % |
+
+This greatly simplifies the PI controller implementation.
+
+---
+
+# PWM (Pulse Width Modulation)
+
+PWM rapidly switches a digital output between HIGH and LOW while varying the
+percentage of time the signal remains HIGH.
+
+```text
+100 %
+
+████████████████████
+
+75 %
+
+██████████████______
+
+50 %
+
+████████________
+
+25 %
+
+████______
+```
+
+The average voltage seen by the load depends on the duty cycle.
+
+PWM therefore allows a digital pin to control
+
+- LED brightness
+- motor speed
+- fan speed
+- power delivered to a load
+
+without generating an analog voltage.
+
+---
+
+# Output Compare
+
+Output Compare uses the timer to trigger an action whenever the counter reaches
+a predefined compare value.
+
+Unlike PWM, Output Compare does not necessarily generate a periodic waveform.
+
+In this repository it is used for
+
+- LED blinking
+- staircase-light timing
+- stopwatch timing
+
+without software polling loops.
+
+---
+
+# One-Pulse Mode
+
+One-Pulse Mode automatically stops a timer after a single timing interval.
+
+```text
+Start
+  │
   ▼
-  ×  PLLN (336)         → VCO output = 336 MHz    (must land in 100–432 MHz)
+Timer counts
+  │
   ▼
-  ÷  PLLP (2)            → SYSCLK     = 168 MHz
+ARR reached
+  │
   ▼
-AHB  (÷1)  → 168 MHz
-  ├─ APB1 (÷4) → 42 MHz  → APB1 timers run at ×2 = 84 MHz
-  └─ APB2 (÷2) → 84 MHz  → APB2 timers run at ×2 = 168 MHz
+Timer stops automatically
 ```
 
-The "timer clock = ×2 APB clock" rule applies whenever the APB prescaler is not 1 — it's a quirk of the STM32F4 clock tree that gives timers on a divided APB bus back their full input frequency. It explains an easy trap: two timers configured identically but sitting on different APB buses (e.g. TIM1 on APB2 vs. TIM2 on APB1) will *not* overflow at the same wall-clock rate, since TIM1 effectively ticks at 168 MHz and TIM2 at 84 MHz even though the "APB clock" driving them differs by only a factor of 2, not the 2× that ends up mattering after the timer doubling rule.
+This is ideal for applications such as a staircase-light timer, where the LED
+should remain ON for a fixed duration before switching OFF automatically.
 
-## Prescaler / period arithmetic
+---
 
-Timer output frequency:
+# 16-bit vs 32-bit Timers
 
-```
-timer_freq = timer_input_clock / (Prescaler + 1)
-```
+Most STM32 timers are **16-bit**, meaning they can count up to
 
-**Example — 1 kHz tick from a 50 MHz clock:**
-
-```
-1000 = 50 000 000 / (Prescaler + 1)
-Prescaler + 1 = 50 000
-Prescaler = 49 999
+```text
+65 535
 ```
 
-**Example — overflow every 2 minutes at a 1 kHz tick:**
+before overflowing.
 
-```
-120 s × 1000 ticks/s = 120 000 ticks
-Period = 120 000 − 1 = 119 999
-```
+Long timing intervals therefore require either
 
-`119 999` exceeds the 16-bit auto-reload register's range (max `65 535` = 2¹⁶ − 1), so this specific period is only achievable on a 32-bit timer. On a 16-bit-only timer, the same 2-minute interval can still be reached by chaining: configure a 1-second overflow and count overflows in the update-interrupt handler until 120 have elapsed.
+- a larger prescaler,
+- overflow counting in software,
+- or a 32-bit timer such as TIM2 or TIM5.
 
-## One-Pulse Mode
+The custom delay implementation in the `utils` module uses **TIM2**, allowing
+long delays without overflow handling.
 
-For a "stay on for N seconds, then switch off automatically" behavior (used in [`dot`](../drivers/dot)'s staircase-light timer), One-Pulse Mode is a better fit than a free-running timer with software bookkeeping: the timer starts once, counts to its configured period, and stops itself — no explicit stop call or elapsed-time tracking needed in the application.
+---
 
-## Output Compare / PWM for LED blink & dimming
+# Where Timers Are Used
 
-Both the blink and dimming behaviors on the "dot" segment ([`dot`](../drivers/dot)) are implemented with a timer Output-Compare channel rather than a software toggle loop, so the on/off (or duty-cycle) switching happens entirely in hardware and the CPU is free to do other work between updates. Blink frequency and dim duty cycle are each driven from a potentiometer reading via [`potis`](../drivers/potis).
+Timers appear throughout this repository.
+
+| Project | Purpose |
+|---------|---------|
+| Blinky Dot | Hardware LED blinking |
+| Dimming Dot | PWM brightness control |
+| Stopwatch | High-resolution time measurement |
+| Fan Controller | PWM generation, tachometer timing, PI control period |
+| Weather Station | Periodic 1 Hz sensor sampling |
+
+---
+
+# Key Takeaways
+
+- Understand the STM32 clock tree before configuring timers.
+- Remember that timer clocks are often **twice the APB clock**.
+- Prescaler controls timer resolution.
+- ARR controls the timer period.
+- PWM controls average output power through duty cycle.
+- Output Compare generates hardware events without CPU polling.
+- One-Pulse Mode is useful for one-shot timing applications.
+- Timer peripherals are the foundation of most real-time embedded systems.
