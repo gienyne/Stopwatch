@@ -172,7 +172,7 @@ A NACK usually means
 
 | Write | Read |
 |--------|------|
-| Master → Slave | Slave → Master |
+| Master -> Slave | Slave -> Master |
 | R/W bit = 0 | R/W bit = 1 |
 | Usually one transaction | Usually write register address first, then read |
 
