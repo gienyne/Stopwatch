@@ -14,7 +14,7 @@ uint16_t utils_gpio_port_read(GPIO_TypeDef *GPIO);
 
 `utils_delay_ms()` provides a simple blocking millisecond delay.
 
-The project originally implemented this as a software delay (Abgabe 1), then later migrated to a hardware timer (TIM2) during the timer chapter. The timer counts at 1 kHz, so one timer tick corresponds to exactly 1 ms. The function simply waits until the desired number of timer ticks has elapsed.
+The project originally implemented this as a software delay, then later migrated to a hardware timer (TIM2) during the timer chapter. The timer counts at 1 kHz, so one timer tick corresponds to exactly 1 ms. The function simply waits until the desired number of timer ticks has elapsed.
 
 Although blocking delays should generally be avoided in production firmware, they are perfectly adequate here for short waits during initialization or simple user-interface tasks.
 
