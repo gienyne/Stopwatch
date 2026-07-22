@@ -1,102 +1,225 @@
 # CAN Bus
 
-Notes behind the multi-node network in [`weather-station`](../projects/weather-station).
+These notes summarize the concepts that were applied while implementing the
+multi-node weather station.
 
-## Frame types
+The project uses the STM32F429 bxCAN peripheral to periodically exchange
+environmental measurements between several independent weather nodes over a
+shared CAN bus.
+
+---
+
+# Why CAN?
+
+Unlike UART, CAN is designed for communication between many embedded devices
+sharing the same physical bus.
+
+Every node can transmit and receive without a central controller while the
+hardware automatically resolves transmission conflicts through bus arbitration.
+
+This makes CAN particularly suitable for
+
+- industrial automation
+- automotive systems
+- robotics
+- distributed sensor networks
+
+which is why it was selected for the Weather Station project.
+
+---
+
+# CAN Frame Types
+
+Four frame types exist.
 
 | Frame | Purpose |
-|---|---|
-| Data Frame | Carries payload (e.g. a sensor reading) |
-| Remote Frame | Requests another node to send its data |
-| Error Frame | Signals a detected bus error |
-| Overload Frame | Inserts a delay when a node is overloaded |
+|---------|----------|
+| Data Frame | Transmits application data |
+| Remote Frame | Requests another node to transmit data |
+| Error Frame | Indicates a communication error |
+| Overload Frame | Delays the next transmission when necessary |
 
-## Data frame structure
+Only **Data Frames** are used in this project.
 
-```
-SOF (1 dominant bit) → Arbitration field (11 or 29 bit ID + priority)
-→ Control field (6 bit, incl. frame type + DLC) → Data field (0–8 bytes)
-→ CRC field (16 bit) → ACK field (2 bit) → EOF (7 recessive bits)
-```
+---
 
-## Arbitration (CSMA/CR)
+# Standard CAN Data Frame
 
-Bit `0` is **dominant**, bit `1` is **recessive**. When multiple nodes transmit simultaneously, each compares the bit it's driving against what's actually on the bus; a node that reads back a dominant bit while it sent a recessive one has lost arbitration and immediately backs off. Practically: a lower numeric identifier always wins bus access, since a `0` in a higher bit position dominates any node trying to send a `1` there — this is what makes the identifier double as a priority.
+A standard (11-bit identifier) CAN frame consists of the following fields.
 
-## Bit stuffing
-
-CAN uses NRZ encoding, where 5+ identical consecutive bits give no signal transition to resynchronize on. Bit stuffing automatically inserts an opposite-polarity bit after every 5 consecutive identical bits, guaranteeing regular transitions for clock recovery.
-
-## bxCAN test modes
-
-| Mode | Behavior |
-|---|---|
-| Silent | Receives normally, never transmits — for passively observing bus traffic |
-| Loopback | Transmits to itself internally, never touches the physical bus — for self-test |
-| Combined (Silent + Loopback) | Internal send/receive loop, isolated from the bus entirely |
-
-This project's CAN logic was validated in **Loopback mode** first — with a logic analyzer's CAN decoder watching the TX pin to confirm outgoing frames — before connecting to the shared physical bus.
-
-## Filter bank example (Mask mode, 16-bit scale)
-
-Given `CAN_FiR1 = 0xFE00AA00`, `CAN_FiR2 = 0xFE00D600`, mask mode, 16-bit scale:
-
-- Mask `0xFE00` = `1111111000000000` → only the upper 7 bits (15–9) of an incoming ID are checked; the rest are don't-care.
-- Filter 0: `0xAA00` → `1010101000000000`
-- Filter 1: `0xD600` → `1101011000000000`
-
-| ID (binary) | Passes? | Matching filter |
-|---|---|---|
-| `0b11000110101` | No | — |
-| `0b10101011001` | Yes | Filter 0 |
-| `0b11010111111` | Yes | Filter 1 |
-
-Corresponding `CAN_FilterTypeDef`:
-
-```c
-CAN_FilterTypeDef filter = {
-    .FilterBank           = 0,
-    .FilterMode           = CAN_FILTERMODE_IDMASK,
-    .FilterScale          = CAN_FILTERSCALE_16BIT,
-    .FilterFIFOAssignment = CAN_FILTER_FIFO0,
-    .FilterActivation     = ENABLE,
-    .FilterIdHigh         = 0xAA00,   // Filter 0 ID
-    .FilterMaskIdHigh     = 0xFE00,   // Filter 0 mask
-    .FilterIdLow          = 0xD600,   // Filter 1 ID
-    .FilterMaskIdLow      = 0xFE00,   // Filter 1 mask
-};
-HAL_CAN_ConfigFilter(&hcan, &filter);
+```text
+ SOF
+  │
+  ▼
+┌───────────────┬─────────┬──────────┬────────────┬──────┬─────┬─────┐
+│ Arbitration   │ Control │ Payload  │ CRC        │ ACK  │ EOF │     │
+│ 11-bit ID     │ DLC     │ 0...8 B  │ Error Check│      │     │
+└───────────────┴─────────┴──────────┴────────────┴──────┴─────┴─────┘
 ```
 
-(Field-to-register mapping cross-checked against `HAL_CAN_ConfigFilter()` in `stm32f4xx_hal_can.c`.)
+The payload carries the sensor value while the identifier determines both the
+message priority and its meaning.
 
-## `CAN_TxHeaderTypeDef`
+---
 
-| Field | Meaning |
-|---|---|
-| `StdId` | 11-bit standard identifier |
-| `ExtId` | 29-bit extended identifier |
-| `IDE` | Standard vs. extended ID selector |
-| `RTR` | Data frame vs. Remote frame |
-| `DLC` | Payload length, 0–8 bytes |
+# Arbitration (CSMA/CR)
 
-(`TransmitGlobalTime` only applies to Time-Triggered Communication mode, unused here.)
+One of CAN's defining features is **non-destructive arbitration**.
 
-## Receiving via interrupt
+If multiple nodes begin transmitting simultaneously, every node continuously
+monitors the bus while sending.
 
-Two pieces are required to react to an inbound FIFO0 message by interrupt rather than polling:
+```
+Dominant bit = 0
+Recessive bit = 1
+```
+
+If a node transmits a recessive bit but detects a dominant bit on the bus, it
+immediately stops transmitting.
+
+The node with the **lowest numerical identifier** therefore wins access to the
+bus without corrupting the transmitted frame.
+
+This means that
+
+- lower CAN ID
+- higher priority
+
+are exactly the same thing.
+
+Unlike Ethernet, no frame collisions occur.
+
+---
+
+# Bit Stuffing
+
+CAN uses **NRZ (Non Return to Zero)** encoding.
+
+A long sequence of identical bits would provide no clock transitions, making
+synchronization difficult.
+
+To solve this, the controller automatically inserts one opposite-polarity bit
+after every five consecutive identical bits.
+
+```text
+11111
+      ↓
+
+111110
+```
+
+This process is completely transparent to the application.
+
+---
+
+# bxCAN Test Modes
+
+During development the communication stack was verified incrementally using the
+different hardware test modes provided by the STM32 bxCAN peripheral.
+
+| Mode | Description |
+|-------|-------------|
+| Silent | Receive only, never acknowledge or transmit |
+| Loopback | Internal transmit → receive without using the physical bus |
+| Silent + Loopback | Internal self-test while remaining electrically isolated |
+
+The Weather Station project was first validated entirely in **Loopback Mode**
+before connecting multiple physical nodes.
+
+A logic analyzer with CAN decoding was used to verify the generated frames.
+
+---
+
+# CAN Filters
+
+Receiving every CAN frame wastes CPU time.
+
+Instead, the STM32 hardware can discard unwanted frames before they ever reach
+the software.
+
+Each filter compares selected identifier bits against a predefined pattern.
+
+Example:
+
+```
+Mask
+
+1111111000000000
+
+↑ these bits must match
+↓ remaining bits ignored
+```
+
+This allows one filter to accept an entire range of identifiers.
+
+The Weather Station uses separate filter banks so each node only receives the
+sensor messages that belong to the supported sensor types.
+
+---
+
+# Message Format Used in this Project
+
+The application uses the 11-bit Standard Identifier.
+
+```
+┌───────────────┬─────────────┐
+│ Node ID       │ Sensor ID   │
+└───────────────┴─────────────┘
+```
+
+The identifier therefore tells the receiver
+
+- which weather station transmitted the frame
+- which environmental quantity is contained in the payload
+
+The payload itself contains one measurement.
+
+| Sensor | Payload |
+|---------|---------|
+| Temperature | int16_t (0.01 °C) |
+| Pressure | uint32_t (Pa) |
+| Humidity | uint16_t (0.01 %) |
+
+Separating metadata (identifier) from measurement data (payload) keeps the
+frame compact while allowing simple hardware filtering.
+
+---
+
+# Interrupt-driven Reception
+
+Instead of continuously polling the receive FIFO, the project reacts to incoming
+messages using interrupts.
 
 ```c
 HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
-
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-    CAN_RxHeaderTypeDef rxHeader;
-    uint8_t data[8];
-    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, data);
-    // handle the frame
-}
 ```
 
-## Network frame format used in this project
+Whenever a frame arrives, the HAL automatically invokes
 
-See [`weather-station`](../projects/weather-station#can-network-frame-format) for the concrete 7-bit-node-ID / 4-bit-sensor-ID identifier layout and per-sensor filter bank setup built on top of these primitives.
+```c
+HAL_CAN_RxFifo0MsgPendingCallback()
+```
+
+where the application retrieves the message using
+
+```c
+HAL_CAN_GetRxMessage()
+```
+
+This avoids unnecessary CPU usage and allows the microcontroller to remain idle
+until new data becomes available.
+
+---
+
+# Development Workflow
+
+The CAN implementation was validated in several stages.
+
+1. Verify frame transmission in Loopback Mode.
+2. Decode transmitted frames using a logic analyzer.
+3. Test CAN filters with different identifiers.
+4. Connect multiple STM32 boards to the physical bus.
+5. Verify periodic sensor exchange between independent weather stations.
+
+Developing the network incrementally greatly simplified debugging and ensured
+that every communication layer worked before introducing additional complexity.
