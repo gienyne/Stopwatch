@@ -97,9 +97,6 @@ STM32F429_Embedded_Systems/
 └── README.md
 ```
 
-Unlike many teaching repositories, the exercises **share a common driver
-library**.
-
 Drivers are implemented once inside `modules/` and reused by every subsequent
 project, resulting in a progressively growing embedded software stack instead
 of duplicated code.
