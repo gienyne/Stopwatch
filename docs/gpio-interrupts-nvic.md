@@ -81,7 +81,7 @@ NVIC
 Interrupt Service Routine (ISR)
 ```
 
-The CPU continues executing other code—or sleeps entirely—until the hardware
+The CPU continues executing other code or sleeps entirely until the hardware
 detects the configured event.
 
 Interrupts therefore provide
