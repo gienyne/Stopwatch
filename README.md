@@ -135,6 +135,7 @@ of duplicated code.
 
 ---
 
+
 # Reusable Modules
 
 Every hardware abstraction is implemented as an independent module with its own
@@ -211,9 +212,7 @@ Features
 | PWM fan with tachometer | Closed-loop control |
 
 ---
-![Uploading image.png…]()
-
-
+<img width="1080" height="1122" alt="STM32f4" src="https://github.com/user-attachments/assets/eae80ead-bb3d-4ebd-8b8e-07c4104e69b9" />
 ---
 
 
