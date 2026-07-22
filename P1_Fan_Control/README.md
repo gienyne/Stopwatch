@@ -1,148 +1,270 @@
-# Fan Speed Control
+# P1 – Closed-Loop Fan Speed Controller
 
-A closed-loop fan controller implemented on the STM32F429 using hardware timers,
-PWM, ADC with DMA, external interrupts and a discrete PI controller.
+> A closed-loop DC fan speed controller implemented on the STM32F429 Discovery platform using hardware timers, ADC + DMA, EXTI interrupts and a discrete PI controller.
 
-The system continuously measures the actual fan speed, compares it with a
-user-selected target speed and automatically adjusts the PWM duty cycle to
-maintain the requested RPM.
-
----
-
-## Overview
-
-Unlike the previous exercises, this project combines several STM32 peripherals
-into a complete embedded control application.
-
-The project demonstrates how measurement, filtering and control can be
-integrated into a real-time feedback loop running entirely on a
-microcontroller.
+<p align="center">
+    <img src="docs/images/fan_setup.jpg" width="750">
+</p>
 
 ---
 
-## Features
+## Project Overview
 
-- Closed-loop PI speed regulation
-- PWM-based motor control
+This project implements a complete embedded closed-loop control system for a PWM-controlled DC fan.
+
+The desired fan speed is selected using a potentiometer, while the actual speed is continuously measured from the fan's tachometer output. A discrete PI controller periodically compares both values and adjusts the PWM duty cycle until the measured speed converges to the requested speed.
+
+Unlike a simple open-loop PWM controller, this project automatically compensates for disturbances such as supply voltage variations or changing mechanical load, keeping the fan speed close to the desired setpoint.
+
+The LCD displays the target speed, measured speed and graphical bar graphs in real time.
+
+---
+
+# Features
+
+- Closed-loop PI speed controller
+- Hardware PWM generation
 - Tachometer-based RPM measurement
-- ADC + DMA acquisition of the speed setpoint
-- Median filtering of RPM measurements
-- Hardware timer driven control loop
+- EXTI interrupt processing
+- Hardware timer based time measurement
+- ADC acquisition using DMA
+- Circular DMA buffer
+- Median filtering of tachometer measurements
 - Real-time LCD visualization
+- Modular driver architecture
 
 ---
 
-## System Architecture
+# System Architecture
 
-```text
-                 Potentiometer
-                       │
-                       ▼
-              Desired Speed (RPM)
-                       │
-                       ▼
-               PI Controller (100 ms)
-                       │
-                       ▼
-                PWM Duty Cycle
-                       │
-                       ▼
-                  DC Fan Motor
-                       │
-             Tachometer Pulses
-                       │
-                       ▼
-                EXTI Interrupt
-                       │
-                       ▼
-              RPM Measurement
-                       │
-                       ▼
-                 Median Filter
-                       │
-                       └───────────────┐
-                                       │
-                                       ▼
-                              Feedback Loop
+The firmware is organized into independent modules responsible for acquisition, control and visualization.
+
+```mermaid
+flowchart LR
+
+P["Potentiometer"]
+ADC["ADC + DMA"]
+PI["PI Controller"]
+PWM["TIM9 PWM"]
+FAN["DC Fan"]
+TACHO["Tachometer"]
+EXTI["EXTI + TIM1"]
+FILTER["Median Filter"]
+LCD["ILI9341 LCD"]
+
+P --> ADC
+ADC --> PI
+
+PI --> PWM
+
+PWM --> FAN
+
+FAN --> TACHO
+
+TACHO --> EXTI
+
+EXTI --> FILTER
+
+FILTER --> PI
+
+FILTER --> LCD
+ADC --> LCD
 ```
 
 ---
 
-## Hardware Resources
+# Closed-Loop Control
 
-| Peripheral | Purpose |
-|------------|---------|
-| ADC1 + DMA | Read potentiometer position |
-| TIM9 | Generate 25 kHz PWM signal |
-| TIM1 | Measure time between tachometer pulses |
-| TIM10 | Execute the PI controller every 100 ms |
-| EXTI | Detect tachometer rising edges |
-| LCD | Display measured values |
+The control algorithm follows the classical feedback control structure used in industrial automation.
+
+```mermaid
+flowchart LR
+
+W["Desired RPM"]
+SUM((Σ))
+PI["PI Controller"]
+PWM["PWM"]
+PLANT["DC Fan"]
+MEAS["Measured RPM"]
+
+W --> SUM
+SUM --> PI
+PI --> PWM
+PWM --> PLANT
+PLANT --> MEAS
+MEAS -->|Feedback| SUM
+```
+
+At every control period the controller computes the speed error
+
+```
+error = desired RPM − measured RPM
+```
+
+and updates the PWM duty cycle until the error approaches zero.
 
 ---
 
-## Control Strategy
+# Control Algorithm
 
-The potentiometer defines the desired fan speed.
+A discrete PI controller is executed periodically every **100 ms**.
 
-The fan's tachometer generates pulses proportional to the current rotational
-speed. Every pulse triggers an interrupt, while a hardware timer measures the
-elapsed time between consecutive pulses to calculate the current RPM.
+```text
+u(k) = Kp · e(k) + Ki · Ta · Σe(k)
+```
 
-To reduce measurement noise, the raw RPM values are passed through a median
-filter before entering the controller.
+where
 
-Every 100 ms a dedicated timer executes the PI controller, which computes the
-required PWM duty cycle from the difference between the desired and measured
-speed.
+| Symbol | Description |
+|---------|-------------|
+| e(k) | Speed error |
+| Kp | Proportional gain |
+| Ki | Integral gain |
+| Ta | Controller sampling period |
+| u(k) | PWM duty cycle |
 
-The resulting duty cycle is applied directly to the PWM output driving the fan.
+The proportional term reacts immediately to the current error while the integral term removes the remaining steady-state error.
+
+The controller period **Ta** is fixed and generated by a hardware timer, ensuring deterministic execution independent of the tachometer frequency.
+
+---
+
+# Hardware
+
+| Component | Purpose |
+|------------|----------|
+| STM32F429 Discovery | Main microcontroller |
+| Waveshare Open429Z | Expansion board |
+| Analog Test Board | Potentiometer input |
+| PWM DC Fan | Controlled plant |
+| Fan Tachometer | Speed feedback |
+| ILI9341 TFT Display | Visualization |
+
+---
+
+# Firmware Implementation
+
+## PWM Generation
+
+TIM9 generates a 25 kHz PWM signal that drives the fan.
+
+The controller only updates the compare register while the timer continuously generates the PWM waveform in hardware.
+
+---
+
+## RPM Measurement
+
+Every rising edge of the tachometer signal generates an EXTI interrupt.
+
+A second timer measures the time between two consecutive pulses.
+
+The measured period is converted into RPM.
+
+---
+
+## ADC Acquisition
+
+The desired fan speed is selected with a potentiometer.
+
+ADC1 continuously samples the potentiometer using DMA in circular mode.
+
+This completely removes the CPU from the acquisition path.
+
+---
+
+## Noise Filtering
+
+Raw tachometer measurements contain occasional glitches.
+
+A median filter removes these outliers before the controller receives the measured RPM.
+
+This considerably improves controller stability.
 
 ---
 
 ## PI Controller
 
-The controller is implemented as a discrete PI controller
+Every 100 ms
 
-```text
-u = Kp · e + Ki · Ta · Σe
+1. Read desired speed
+2. Read filtered RPM
+3. Compute control error
+4. Execute PI algorithm
+5. Update PWM duty cycle
+
+---
+
+## LCD Visualization
+
+The LCD displays
+
+- Desired RPM
+- Measured RPM
+- Desired speed bar graph
+- Actual speed bar graph
+
+allowing the control loop to be observed in real time.
+
+---
+
+# Results
+
+| Parameter | Value |
+|------------|--------|
+| PWM Frequency | 25 kHz |
+| Controller Period | 100 ms |
+| Maximum Speed | ~4000 RPM |
+| Feedback Source | Tachometer |
+| ADC Mode | DMA Circular |
+| Filtering | Median Filter |
+
+After tuning, the controller reaches the requested speed within approximately **300–500 ms** without sustained oscillation.
+
+---
+
+# Project Structure
+
+```
+P1_Fan_Control/
+│
+├── Core/
+├── modules/
+│   ├── P1_Fan/
+│   ├── potis_DMA/
+│   ├── median/
+│   ├── my_lcd/
+│   └── lcd/
+│
+├── docs/
+└── README.md
 ```
 
-where
-
-- **e** is the speed error,
-- **Ta** is the controller sampling period,
-- **Kp** is the proportional gain,
-- **Ki** is the integral gain.
-
-The controller output is limited to the valid PWM range before updating the
-hardware timer.
-
 ---
 
-## Display
+# Lessons Learned
 
-The LCD provides live feedback including
+This project combines several embedded systems concepts into a single real-world application:
 
-- desired speed
-- measured speed
-- setpoint bar graph
-- actual speed bar graph
-
-allowing the regulation behaviour to be observed in real time.
-
----
-
-## Learning Outcomes
-
-This project combines concepts introduced throughout the repository into a
-single embedded application:
-
-- ADC
-- DMA
-- PWM
-- Hardware timers
-- External interrupts
+- Timer configuration
+- PWM generation
+- EXTI interrupts
+- ADC with DMA
+- Circular buffers
 - Signal filtering
-- Closed-loop feedback control
-- Real-time embedded software design
+- PI control theory
+- Real-time visualization
+- Embedded debugging
+
+---
+
+# Future Improvements
+
+Possible future extensions include
+
+- Anti-windup for the integral term
+- Full PID controller
+- Automatic controller tuning
+- UART telemetry
+- Data logging
+- FreeRTOS-based implementation
+- Temperature-dependent fan control
