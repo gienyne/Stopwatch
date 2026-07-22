@@ -103,7 +103,7 @@ after every five consecutive identical bits.
 
 ```text
 11111
-      ↓
+      |
 
 111110
 ```
@@ -112,10 +112,10 @@ This process is completely transparent to the application.
 
 ---
 
-# bxCAN Test Modes
+# CAN Test Modes
 
 During development the communication stack was verified incrementally using the
-different hardware test modes provided by the STM32 bxCAN peripheral.
+different hardware test modes provided by the STM32 CAN peripheral.
 
 | Mode | Description |
 |-------|-------------|
