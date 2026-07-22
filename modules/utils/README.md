@@ -1,4 +1,4 @@
-# utils — shared helper functions
+# utils - shared helper functions
 
 Small utility functions reused by multiple modules.
 
