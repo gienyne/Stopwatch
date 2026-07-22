@@ -3,7 +3,7 @@
 These notes summarize the concepts that were applied while implementing the
 multi-node weather station.
 
-The project uses the STM32F429 bxCAN peripheral to periodically exchange
+The project uses the STM32F429 CAN peripheral to periodically exchange
 environmental measurements between several independent weather nodes over a
 shared CAN bus.
 
