@@ -211,8 +211,9 @@ Features
 | PWM fan with tachometer | Closed-loop control |
 
 ---
-
 ![Uploading image.png…]()
+
+---
 
 
 
