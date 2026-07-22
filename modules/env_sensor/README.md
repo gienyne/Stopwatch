@@ -1,4 +1,4 @@
-# env_sensor - BME280 sensor + CAN communication
+# env_sensor: BME280 sensor + CAN communication
 
 This module combines two responsibilities required by the weather-station project:
 
