@@ -272,3 +272,9 @@ Each folder is an independent STM32CubeIDE project.
 # License
 
 MIT - see [LICENSE](LICENSE).
+
+## Author
+
+**Dimitry Ntofeu Nyatcha**
+
+ ntofeunyatchadimitry@gmail.com
