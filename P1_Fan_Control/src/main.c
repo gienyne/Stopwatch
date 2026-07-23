@@ -2,7 +2,7 @@
  * P1_Fan.c
  *
  *  Created on: May 27, 2025
- *      Author: Dimitry Ntofeu nyatcha, Sidal Güray
+ *      Author: Dimitry Ntofeu nyatcha
  */
 
 
